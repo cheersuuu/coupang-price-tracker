@@ -55,7 +55,7 @@ if prev:
         return "color: gray"
 
     st.dataframe(
-        delta_df.style.applymap(color_delta, subset=["변동"])
+        delta_df.style.map(color_delta, subset=["변동"])
                       .format({"전일가": "{:,}원", "현재가": "{:,}원", "변동": "{:+,}원"}),
         use_container_width=True, height=400
     )
