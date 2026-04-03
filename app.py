@@ -7,19 +7,17 @@ st.set_page_config(page_title="쿠팡 가격 트래커", page_icon="📦", layou
 
 def classify_group(name):
     name = str(name)
-    if "세트" in name or ("AA" in name and "AAA" in name):
-        return "세트"
-    if "AAAA" in name:
-        return "특수"
-    if " AA " in name or name.endswith("AA 건전지") or "AA건전지" in name or "알카라인 AA" in name or "오리지널 AA" in name or "울트라 AA" in name or "디럭스 AA" in name:
-        return "AA"
-    if "AAA" in name:
-        return "AAA"
-    if any(x in name for x in ["CR2016","CR2025","CR2032","CR1616","CR1620","CR1632","CR2450","LR44","A76","코인"]):
-        return "코인"
-    if any(x in name for x in ["C형","D형","9V","AAAA","A23","MN21","CR123","CR2 "," CR2"]):
-        return "특수"
-    return "기타"
+    if "울트라" in name:
+        return "울트라"
+    if "디럭스" in name:
+        return "디럭스"
+    if "알카라인" in name and ("AA" in name or "AAA" in name):
+        return "오리지널"
+    if any(x in name for x in ["2032", "2025", "2016"]):
+        return "리튬코인"
+    if any(x in name for x in ["C형", "D형", "9V"]):
+        return "C/D/9V"
+    return "기타특수"
 
 @st.cache_data(ttl=300)
 def load_data():
@@ -38,7 +36,7 @@ st.title("📦 쿠팡 가격 트래킹 대시보드")
 st.caption(f"마지막 업데이트: {latest}")
 
 # ── 그룹 필터 (상단 탭)
-groups = ["전체", "AA", "AAA", "코인", "특수", "세트", "기타"]
+groups = ["전체", "오리지널", "울트라", "디럭스", "리튬코인", "C/D/9V", "기타특수"]
 selected_group = st.radio("상품 그룹", groups, horizontal=True, label_visibility="collapsed")
 
 def filter_by_group(dataframe):
