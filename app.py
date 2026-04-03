@@ -36,7 +36,7 @@ st.title("📦 쿠팡 가격 트래킹 대시보드")
 st.caption(f"마지막 업데이트: {latest}")
 
 # ── 그룹 필터 (상단 탭)
-groups = ["전체", "오리지널", "울트라", "디럭스", "C/D/9V", "리튬코인", "기타특수"]
+groups = ["전체", "오리지널", "디럭스", "울트라", "C/D/9V", "리튬코인", "기타특수"]
 selected_group = st.radio("상품 그룹", groups, horizontal=True, label_visibility="collapsed")
 
 def filter_by_group(dataframe):
