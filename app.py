@@ -80,6 +80,10 @@ def load_data():
     )
     # 품절 문자열은 NaN으로 처리해 숫자 연산 가능하게
     df["가격"] = pd.to_numeric(df["가격"], errors="coerce")
+    # 고유 키: productID + itemID + vendorItemID 조합 (itemID 비어있어도 중복 없음)
+    df["_uid"] = (df["productID"].astype(str) + "_" +
+                  df["itemID"].astype(str) + "_" +
+                  df["vendorItemID"].astype(str))
     return df
 
 
@@ -118,7 +122,7 @@ for tab, brand in zip(tabs, brands):
 
             if prev:
                 prev_df_key = bdf[bdf["Date"].dt.date == prev].copy()
-                key_merged = key_latest.merge(prev_df_key[["itemID", "가격"]], on="itemID", suffixes=("", "_prev"))
+                key_merged = key_latest.merge(prev_df_key[["_uid", "가격"]], on="_uid", suffixes=("", "_prev"))
                 key_merged["변동"] = key_merged["가격"] - key_merged["가격_prev"]
 
                 def color_delta_key(val):
@@ -128,7 +132,7 @@ for tab, brand in zip(tabs, brands):
 
                 key_show = key_merged[["상품명", "개수", "수량", "가격_prev", "가격", "변동"]].copy()
                 key_show.columns = ["시리즈", "모델명/품번", "색상", "전일가", "현재가", "변동"]
-                key_show = key_show.drop_duplicates(subset=["모델명/품번"]).sort_values("모델명/품번")
+                key_show = key_show.sort_values("모델명/품번")
                 st.dataframe(
                     key_show.style.map(color_delta_key, subset=["변동"])
                                   .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}),
@@ -169,7 +173,7 @@ for tab, brand in zip(tabs, brands):
 
         if prev:
             prev_df = bdf[bdf["Date"].dt.date == prev].copy()
-            merged = latest_df.merge(prev_df[["itemID", "가격"]], on="itemID", suffixes=("", "_prev"))
+            merged = latest_df.merge(prev_df[["_uid", "가격"]], on="_uid", suffixes=("", "_prev"))
             merged["변동"] = merged["가격"] - merged["가격_prev"]
             up = (merged["변동"] > 0).sum()
             down = (merged["변동"] < 0).sum()
