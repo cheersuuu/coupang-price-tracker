@@ -47,9 +47,9 @@ def load_data():
 
 def fmt_price(val):
     try:
-        if pd.isna(val): return "품절"
-        return f"{int(val):,}원"
-    except: return val
+        return f"{int(float(val)):,}원"
+    except:
+        return "품절"
 
 
 VALID_BRANDS = ["braun", "duracell"]
