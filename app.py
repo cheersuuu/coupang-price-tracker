@@ -137,7 +137,7 @@ for tab, brand in zip(tabs, brands):
                 key_show = key_show.sort_values("모델명/품번")
                 st.dataframe(
                     key_show.style.map(color_delta_key, subset=["변동"])
-                                  .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}),
+                                  .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}, na_rep="품절"),
                     use_container_width=True, hide_index=True,
                 )
             else:
@@ -145,7 +145,7 @@ for tab, brand in zip(tabs, brands):
                 key_show.columns = ["시리즈", "모델명/품번", "색상", "현재가"]
                 key_show = key_show.sort_values("모델명/품번")
                 st.dataframe(
-                    key_show.style.format({"현재가": fmt_price}),
+                    key_show.style.format({"현재가": fmt_price}, na_rep="품절"),
                     use_container_width=True, hide_index=True,
                 )
 
@@ -207,7 +207,7 @@ for tab, brand in zip(tabs, brands):
 
             st.dataframe(
                 delta_df.style.map(color_delta, subset=["변동"])
-                              .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}),
+                              .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}, na_rep="품절"),
                 use_container_width=True, height=400,
             )
         else:
@@ -244,6 +244,6 @@ for tab, brand in zip(tabs, brands):
             show_df.columns = ["그룹", "SKU", "개수", "수량", "가격"]
             show_df = show_df.sort_values(["그룹", "가격"], ascending=[True, False])
         st.dataframe(
-            show_df.style.format({"가격": fmt_price}),
+            show_df.style.format({"가격": fmt_price}, na_rep="품절"),
             use_container_width=True, height=500,
         )
