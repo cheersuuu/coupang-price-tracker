@@ -36,6 +36,13 @@ def load_data():
     df["SKU"] = df["SKU"].str.strip()
     if "브랜드" not in df.columns:
         df["브랜드"] = "duracell"
+    # braun: 상품명 앞 (인기) 제거 + 브라운 → BRAUN 통일
+    braun_mask = df["브랜드"] == "braun"
+    df.loc[braun_mask, "상품명"] = (
+        df.loc[braun_mask, "상품명"]
+        .str.replace(r"^\s*\(인기\)\s*", "", regex=True)
+        .str.replace(r"^브라운\s*", "BRAUN ", regex=True)
+    )
     # braun: 모델명이 cc로 끝나고 시리즈명이 +로 안 끝나면 +세척충전스테이션 추가
     braun_cc_mask = (
         (df["브랜드"] == "braun") &
