@@ -59,8 +59,11 @@ def load_data():
     )
     df.loc[braun_cc_mask, "상품명"] = df.loc[braun_cc_mask, "상품명"] + "+세척충전스테이션"
     df["그룹"] = df.apply(
-        lambda r: classify_braun_group(r["상품명"]) if r["브랜드"] == "braun"
-                  else classify_group(r["상품명"]),
+        lambda r: (
+            "LEVANT" if r["브랜드"] == "braun" and str(r.get("개수", "")).startswith(("73-", "53-"))
+            else classify_braun_group(r["상품명"]) if r["브랜드"] == "braun"
+            else classify_group(r["상품명"])
+        ),
         axis=1,
     )
     # 품절 문자열은 NaN으로 처리해 숫자 연산 가능하게
