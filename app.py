@@ -109,8 +109,10 @@ for tab, brand in zip(tabs, brands):
         st.caption(f"마지막 업데이트: {latest}")
 
         # ── 그룹 필터
+        BRAUN_KEY_MODELS = ["9665cc", "9615s", "9597cc", "9450cc", "9457cc"]
+
         if brand == "braun":
-            braun_groups = ["전체", "울트라씬", "시리즈9", "LEVANT", "시리즈7", "시리즈5", "IPL/바디트리머", "기타"]
+            braun_groups = ["주요상품", "전체", "울트라씬", "시리즈9", "LEVANT", "시리즈7", "시리즈5", "IPL/바디트리머", "기타"]
             selected_group = st.radio("시리즈", braun_groups, horizontal=True,
                                       key=f"group_{brand}", label_visibility="collapsed")
         else:
@@ -119,6 +121,8 @@ for tab, brand in zip(tabs, brands):
                                       key=f"group_{brand}", label_visibility="collapsed")
 
         def filter_group(dataframe):
+            if selected_group == "주요상품":
+                return dataframe[dataframe["개수"].isin(BRAUN_KEY_MODELS)]
             if selected_group == "전체":
                 return dataframe
             return dataframe[dataframe["그룹"] == selected_group]
