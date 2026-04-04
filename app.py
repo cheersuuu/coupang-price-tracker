@@ -40,6 +40,8 @@ def load_data():
                   else classify_group(r["상품명"]),
         axis=1,
     )
+    # 품절 문자열은 NaN으로 처리해 숫자 연산 가능하게
+    df["가격"] = pd.to_numeric(df["가격"], errors="coerce")
     return df
 
 
@@ -154,8 +156,9 @@ for tab, brand in zip(tabs, brands):
             show_df.columns = ["그룹", "SKU", "개수", "수량", "가격"]
             show_df = show_df.sort_values(["그룹", "가격"], ascending=[True, False])
         def fmt_price(val):
-            if val == "품절" or val == "": return val
-            try: return f"{int(val):,}원"
+            try:
+                if pd.isna(val): return "품절"
+                return f"{int(val):,}원"
             except: return val
 
         st.dataframe(
