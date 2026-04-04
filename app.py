@@ -1,8 +1,10 @@
+import re
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 
 st.set_page_config(page_title="쿠팡 가격 트래커", page_icon="📦", layout="wide")
+
 
 def classify_group(name):
     name = str(name)
@@ -18,6 +20,14 @@ def classify_group(name):
         return "C/D/9V"
     return "기타특수"
 
+
+def classify_braun_group(name):
+    m = re.search(r"시리즈\s+(\d+)", str(name))
+    if m:
+        return "시리즈 " + m.group(1)
+    return "기타"
+
+
 @st.cache_data(ttl=300)
 def load_data():
     df = pd.read_csv("data.csv", parse_dates=["Date"])
@@ -25,15 +35,19 @@ def load_data():
     df["SKU"] = df["SKU"].str.strip()
     if "브랜드" not in df.columns:
         df["브랜드"] = "duracell"
-    df["그룹"] = df["상품명"].apply(classify_group)
+    df["그룹"] = df.apply(
+        lambda r: classify_braun_group(r["상품명"]) if r["브랜드"] == "braun"
+                  else classify_group(r["상품명"]),
+        axis=1,
+    )
     return df
+
 
 df = load_data()
 brands = sorted(df["브랜드"].unique())
 
 st.title("📦 쿠팡 가격 트래킹 대시보드")
 
-# ── 브랜드 탭
 tabs = st.tabs([b.upper() for b in brands])
 
 for tab, brand in zip(tabs, brands):
@@ -46,13 +60,14 @@ for tab, brand in zip(tabs, brands):
         st.caption(f"마지막 업데이트: {latest}")
 
         # ── 그룹 필터
-        if brand == "duracell":
-            groups = ["전체", "오리지널", "디럭스", "울트라", "C/D/9V", "리튬코인", "기타특수"]
+        if brand == "braun":
+            series_list = ["전체"] + sorted(bdf["그룹"].unique().tolist())
+            selected_group = st.radio("시리즈", series_list, horizontal=True,
+                                      key=f"group_{brand}", label_visibility="collapsed")
         else:
-            groups = ["전체"]
-
-        selected_group = st.radio("그룹", groups, horizontal=True,
-                                   key=f"group_{brand}", label_visibility="collapsed")
+            duracell_groups = ["전체", "오리지널", "디럭스", "울트라", "C/D/9V", "리튬코인", "기타특수"]
+            selected_group = st.radio("그룹", duracell_groups, horizontal=True,
+                                      key=f"group_{brand}", label_visibility="collapsed")
 
         def filter_group(dataframe):
             if selected_group == "전체":
@@ -68,7 +83,7 @@ for tab, brand in zip(tabs, brands):
 
         if prev:
             prev_df = bdf[bdf["Date"].dt.date == prev].copy()
-            merged = latest_df.merge(prev_df[["itemID","가격"]], on="itemID", suffixes=("","_prev"))
+            merged = latest_df.merge(prev_df[["itemID", "가격"]], on="itemID", suffixes=("", "_prev"))
             merged["변동"] = merged["가격"] - merged["가격_prev"]
             up = (merged["변동"] > 0).sum()
             down = (merged["변동"] < 0).sum()
@@ -85,8 +100,12 @@ for tab, brand in zip(tabs, brands):
         # ── 전일 대비 변동 표
         st.subheader("📊 전일 대비 가격 변동")
         if prev and len(merged) > 0:
-            delta_df = merged[["SKU","개수","수량","가격_prev","가격","변동"]].copy()
-            delta_df.columns = ["SKU","개수","수량","전일가","현재가","변동"]
+            if brand == "braun":
+                delta_df = merged[["상품명", "개수", "수량", "가격_prev", "가격", "변동"]].copy()
+                delta_df.columns = ["시리즈", "모델명/품번", "색상", "전일가", "현재가", "변동"]
+            else:
+                delta_df = merged[["SKU", "개수", "수량", "가격_prev", "가격", "변동"]].copy()
+                delta_df.columns = ["SKU", "개수", "수량", "전일가", "현재가", "변동"]
             delta_df = delta_df.sort_values("변동")
 
             def color_delta(val):
@@ -96,8 +115,8 @@ for tab, brand in zip(tabs, brands):
 
             st.dataframe(
                 delta_df.style.map(color_delta, subset=["변동"])
-                              .format({"전일가": "{:,}원", "현재가": "{:,}원", "변동": "{:+,}원"}),
-                use_container_width=True, height=400
+                              .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}),
+                use_container_width=True, height=400,
             )
         else:
             st.info("비교할 이전 날짜 데이터가 없습니다.")
@@ -107,13 +126,15 @@ for tab, brand in zip(tabs, brands):
         # ── 가격 추이
         st.subheader("📈 상품별 가격 추이")
         filtered_df = filter_group(bdf)
-        skus = sorted(filtered_df["SKU"].unique())
-        selected = st.multiselect("상품 선택", skus, default=skus[:5], key=f"skus_{brand}")
+        sku_options = sorted(filtered_df["SKU"].unique())
+        chart_label = "모델" if brand == "braun" else "SKU"
+        selected = st.multiselect("상품 선택", sku_options, default=sku_options[:5], key=f"skus_{brand}")
 
         if selected:
             chart_df = filtered_df[filtered_df["SKU"].isin(selected)]
             fig = px.line(chart_df, x="Date", y="가격", color="SKU",
-                          markers=True, labels={"가격": "가격 (원)", "Date": "날짜"})
+                          markers=True,
+                          labels={"가격": "가격 (원)", "Date": "날짜", "SKU": chart_label})
             fig.update_layout(height=450, legend=dict(orientation="h", yanchor="bottom", y=1.02))
             fig.update_yaxes(tickformat=",")
             st.plotly_chart(fig, use_container_width=True)
@@ -122,9 +143,20 @@ for tab, brand in zip(tabs, brands):
 
         # ── 전체 목록
         st.subheader("📋 현재 가격 전체 목록")
-        show_df = latest_df[["그룹","SKU","개수","수량","가격"]].copy()
-        show_df = show_df.sort_values(["그룹","가격"], ascending=[True, False])
+        if brand == "braun":
+            show_df = latest_df[["상품명", "개수", "수량", "가격"]].copy()
+            show_df.columns = ["시리즈", "모델명/품번", "색상", "가격"]
+            show_df = show_df.sort_values(["시리즈", "가격"], ascending=[True, False])
+        else:
+            show_df = latest_df[["그룹", "SKU", "개수", "수량", "가격"]].copy()
+            show_df.columns = ["그룹", "SKU", "개수", "수량", "가격"]
+            show_df = show_df.sort_values(["그룹", "가격"], ascending=[True, False])
+        def fmt_price(val):
+            if val == "품절" or val == "": return val
+            try: return f"{int(val):,}원"
+            except: return val
+
         st.dataframe(
-            show_df.style.format({"가격": "{:,}원"}),
-            use_container_width=True, height=500
+            show_df.style.format({"가격": fmt_price}),
+            use_container_width=True, height=500,
         )
