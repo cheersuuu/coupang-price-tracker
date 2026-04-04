@@ -43,8 +43,10 @@ def load_data():
     return df
 
 
+VALID_BRANDS = ["braun", "duracell"]
+
 df = load_data()
-brands = sorted(df["브랜드"].unique())
+brands = [b for b in sorted(df["브랜드"].unique()) if b in VALID_BRANDS]
 
 st.title("📦 쿠팡 가격 트래킹 대시보드")
 
