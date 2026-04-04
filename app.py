@@ -23,9 +23,16 @@ def classify_group(name):
 
 
 def classify_braun_group(name):
-    m = re.search(r"시리즈\s+(\d+)", str(name))
+    name = str(name)
+    if re.search(r'IPL|바디\s*트리머', name):
+        return "IPL/바디트리머"
+    if re.search(r'LEVANT|레반트', name, re.IGNORECASE):
+        return "LEVANT"
+    if re.search(r'울트라\s*씬', name):
+        return "울트라씬"
+    m = re.search(r"시리즈\s*(\d+)", name)
     if m:
-        return "시리즈 " + m.group(1)
+        return "시리즈" + m.group(1)
     return "기타"
 
 
@@ -88,8 +95,8 @@ for tab, brand in zip(tabs, brands):
 
         # ── 그룹 필터
         if brand == "braun":
-            series_list = ["전체"] + sorted(bdf["그룹"].unique().tolist())
-            selected_group = st.radio("시리즈", series_list, horizontal=True,
+            braun_groups = ["전체", "울트라씬", "시리즈9", "LEVANT", "시리즈7", "시리즈5", "IPL/바디트리머", "기타"]
+            selected_group = st.radio("시리즈", braun_groups, horizontal=True,
                                       key=f"group_{brand}", label_visibility="collapsed")
         else:
             duracell_groups = ["전체", "오리지널", "디럭스", "울트라", "C/D/9V", "리튬코인", "기타특수"]
