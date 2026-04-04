@@ -12,7 +12,8 @@ def classify_group(name):
         return "울트라"
     if "디럭스" in name:
         return "디럭스"
-    if "알카라인" in name and ("AA" in name or "AAA" in name):
+    # AA/AAA 단어 단위 매칭 (AAAA 제외), "오리지널" 키워드도 포함
+    if re.search(r'\bAAA\b|\bAA\b', name) and ("알카라인" in name or "오리지널" in name):
         return "오리지널"
     if any(x in name for x in ["2032", "2025", "2016"]):
         return "리튬코인"
