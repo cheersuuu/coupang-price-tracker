@@ -40,7 +40,8 @@ def load_data():
     braun_cc_mask = (
         (df["브랜드"] == "braun") &
         df["개수"].str.endswith("cc", na=False) &
-        ~df["상품명"].str.endswith("+", na=False)
+        ~df["상품명"].str.endswith("+", na=False) &
+        ~df["상품명"].str.contains("파워케이스", na=False)
     )
     df.loc[braun_cc_mask, "상품명"] = df.loc[braun_cc_mask, "상품명"] + "+세척충전스테이션"
     df["그룹"] = df.apply(
