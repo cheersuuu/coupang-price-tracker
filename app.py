@@ -58,7 +58,7 @@ def load_data():
         ~df["상품명"].str.contains("파워.?케이스", na=False, regex=True) &
         ~df["상품명"].str.contains("세척", na=False)
     )
-    df.loc[braun_cc_mask, "상품명"] = df.loc[braun_cc_mask, "상품명"] + "+세척충전스테이션"
+    df.loc[braun_cc_mask, "상품명"] = df.loc[braun_cc_mask, "상품명"] + "+ 세척 충전 스테이션 세트"
     df["그룹"] = df.apply(
         lambda r: (
             "LEVANT" if r["브랜드"] == "braun" and str(r.get("개수", "")).startswith(("73-", "53-"))
