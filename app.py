@@ -50,6 +50,17 @@ def load_data():
         .str.replace(r"^\s*\(인기\)\s*", "", regex=True)
         .str.replace(r"^브라운\s*", "BRAUN ", regex=True)
     )
+    # braun: 상품명에 제모 포함 시 IPL 통일명 + 모델명
+    def normalize_ipl_model(model):
+        model = str(model)
+        if "PL5257" in model:
+            return "PL5257"
+        if "6031" in model:
+            return "PL5154"
+        return model
+
+    ipl_mask = (df["브랜드"] == "braun") & df["상품명"].str.contains("제모", na=False)
+    df.loc[ipl_mask, "상품명"] = "BRAUN 실크 엑스퍼트 프로 파이브 IPL " + df.loc[ipl_mask, "개수"].apply(normalize_ipl_model)
     # braun: 모델명이 cc로 끝나고 시리즈명이 +로 안 끝나면 +세척충전스테이션 추가
     braun_cc_mask = (
         (df["브랜드"] == "braun") &
