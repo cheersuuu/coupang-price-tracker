@@ -137,7 +137,7 @@ for tab, brand in zip(tabs, brands):
         # ── 가격 추이
         st.subheader("📈 상품별 가격 추이")
         filtered_df = filter_group(bdf)
-        sku_options = sorted(filtered_df["SKU"].unique())
+        sku_options = sorted(filtered_df["SKU"].dropna().unique())
         chart_label = "모델" if brand == "braun" else "SKU"
         selected = st.multiselect("상품 선택", sku_options, default=sku_options[:5], key=f"skus_{brand}")
 
