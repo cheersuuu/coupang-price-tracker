@@ -134,7 +134,7 @@ for tab, brand in zip(tabs, brands):
 
                 key_show = key_merged[["상품명", "개수", "수량", "가격_prev", "가격", "변동"]].copy()
                 key_show.columns = ["시리즈", "모델명/품번", "색상", "전일가", "현재가", "변동"]
-                key_show = key_show.drop_duplicates(subset=["모델명/품번"]).sort_values("모델명/품번")
+                key_show = key_show.sort_values("모델명/품번")
                 st.dataframe(
                     key_show.style.map(color_delta_key, subset=["변동"])
                                   .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}),
