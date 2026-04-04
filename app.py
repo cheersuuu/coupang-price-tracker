@@ -36,6 +36,13 @@ def load_data():
     df["SKU"] = df["SKU"].str.strip()
     if "브랜드" not in df.columns:
         df["브랜드"] = "duracell"
+    # braun: 모델명이 cc로 끝나고 시리즈명이 +로 안 끝나면 +세척충전스테이션 추가
+    braun_cc_mask = (
+        (df["브랜드"] == "braun") &
+        df["개수"].str.endswith("cc", na=False) &
+        ~df["상품명"].str.endswith("+", na=False)
+    )
+    df.loc[braun_cc_mask, "상품명"] = df.loc[braun_cc_mask, "상품명"] + "+세척충전스테이션"
     df["그룹"] = df.apply(
         lambda r: classify_braun_group(r["상품명"]) if r["브랜드"] == "braun"
                   else classify_group(r["상품명"]),
