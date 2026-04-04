@@ -135,17 +135,20 @@ for tab, brand in zip(tabs, brands):
                 key_show = key_merged[["상품명", "개수", "수량", "가격_prev", "가격", "변동"]].copy()
                 key_show.columns = ["시리즈", "모델명/품번", "색상", "전일가", "현재가", "변동"]
                 key_show = key_show.sort_values("모델명/품번")
+                key_show["전일가"] = key_show["전일가"].apply(fmt_price)
+                key_show["현재가"] = key_show["현재가"].apply(fmt_price)
+                key_show["변동"]   = key_show["변동"].apply(lambda v: f"{int(v):+,}원" if pd.notna(v) else "품절")
                 st.dataframe(
-                    key_show.style.map(color_delta_key, subset=["변동"])
-                                  .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}, na_rep="품절"),
+                    key_show.style.map(color_delta_key, subset=["변동"]),
                     use_container_width=True, hide_index=True,
                 )
             else:
                 key_show = key_latest[["상품명", "개수", "수량", "가격"]].copy()
                 key_show.columns = ["시리즈", "모델명/품번", "색상", "현재가"]
                 key_show = key_show.sort_values("모델명/품번")
+                key_show["현재가"] = key_show["현재가"].apply(fmt_price)
                 st.dataframe(
-                    key_show.style.format({"현재가": fmt_price}, na_rep="품절"),
+                    key_show,
                     use_container_width=True, hide_index=True,
                 )
 
@@ -199,15 +202,17 @@ for tab, brand in zip(tabs, brands):
                 delta_df = merged[["SKU", "개수", "수량", "가격_prev", "가격", "변동"]].copy()
                 delta_df.columns = ["SKU", "개수", "수량", "전일가", "현재가", "변동"]
             delta_df = delta_df.sort_values("변동")
+            delta_df["전일가"] = delta_df["전일가"].apply(fmt_price)
+            delta_df["현재가"] = delta_df["현재가"].apply(fmt_price)
+            delta_df["변동"]   = delta_df["변동"].apply(lambda v: f"{int(v):+,}원" if pd.notna(v) else "품절")
 
             def color_delta(val):
-                if val > 0: return "color: red"
-                elif val < 0: return "color: blue"
+                if isinstance(val, str) and "+" in val: return "color: red"
+                elif isinstance(val, str) and val.startswith("-"): return "color: blue"
                 return "color: gray"
 
             st.dataframe(
-                delta_df.style.map(color_delta, subset=["변동"])
-                              .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}, na_rep="품절"),
+                delta_df.style.map(color_delta, subset=["변동"]),
                 use_container_width=True, height=400,
             )
         else:
@@ -243,7 +248,5 @@ for tab, brand in zip(tabs, brands):
             show_df = latest_df[["그룹", "SKU", "개수", "수량", "가격"]].copy()
             show_df.columns = ["그룹", "SKU", "개수", "수량", "가격"]
             show_df = show_df.sort_values(["그룹", "가격"], ascending=[True, False])
-        st.dataframe(
-            show_df.style.format({"가격": fmt_price}, na_rep="품절"),
-            use_container_width=True, height=500,
-        )
+        show_df["가격"] = show_df["가격"].apply(fmt_price)
+        st.dataframe(show_df, use_container_width=True, height=500)
