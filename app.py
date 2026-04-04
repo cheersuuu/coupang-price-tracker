@@ -128,8 +128,8 @@ for tab, brand in zip(tabs, brands):
                 key_merged["변동"] = key_merged["가격"] - key_merged["가격_prev"]
 
                 def color_delta_key(val):
-                    if val > 0: return "color: red"
-                    elif val < 0: return "color: blue"
+                    if isinstance(val, str) and val.startswith("+"): return "color: red"
+                    elif isinstance(val, str) and val.startswith("-"): return "color: blue"
                     return "color: gray"
 
                 key_show = key_merged[["상품명", "개수", "수량", "가격_prev", "가격", "변동"]].copy()
