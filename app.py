@@ -108,11 +108,46 @@ for tab, brand in zip(tabs, brands):
 
         st.caption(f"마지막 업데이트: {latest}")
 
-        # ── 그룹 필터
         BRAUN_KEY_MODELS = ["9665cc", "9615s", "9597cc", "9450cc", "9457cc"]
 
+        # ── 주요상품 섹션 (브라운 전용)
         if brand == "braun":
-            braun_groups = ["주요상품", "전체", "울트라씬", "시리즈9", "LEVANT", "시리즈7", "시리즈5", "IPL/바디트리머", "기타"]
+            st.subheader("⭐ 주요상품")
+            key_latest = bdf[bdf["Date"].dt.date == latest].copy()
+            key_latest = key_latest[key_latest["개수"].isin(BRAUN_KEY_MODELS)]
+
+            if prev:
+                prev_df_key = bdf[bdf["Date"].dt.date == prev].copy()
+                key_merged = key_latest.merge(prev_df_key[["itemID", "가격"]], on="itemID", suffixes=("", "_prev"))
+                key_merged["변동"] = key_merged["가격"] - key_merged["가격_prev"]
+
+                def color_delta_key(val):
+                    if val > 0: return "color: red"
+                    elif val < 0: return "color: blue"
+                    return "color: gray"
+
+                key_show = key_merged[["상품명", "개수", "수량", "가격_prev", "가격", "변동"]].copy()
+                key_show.columns = ["시리즈", "모델명/품번", "색상", "전일가", "현재가", "변동"]
+                key_show = key_show.sort_values("모델명/품번")
+                st.dataframe(
+                    key_show.style.map(color_delta_key, subset=["변동"])
+                                  .format({"전일가": fmt_price, "현재가": fmt_price, "변동": "{:+,}원"}),
+                    use_container_width=True, hide_index=True,
+                )
+            else:
+                key_show = key_latest[["상품명", "개수", "수량", "가격"]].copy()
+                key_show.columns = ["시리즈", "모델명/품번", "색상", "현재가"]
+                key_show = key_show.sort_values("모델명/품번")
+                st.dataframe(
+                    key_show.style.format({"현재가": fmt_price}),
+                    use_container_width=True, hide_index=True,
+                )
+
+            st.divider()
+
+        # ── 그룹 필터
+        if brand == "braun":
+            braun_groups = ["전체", "울트라씬", "시리즈9", "LEVANT", "시리즈7", "시리즈5", "IPL/바디트리머", "기타"]
             selected_group = st.radio("시리즈", braun_groups, horizontal=True,
                                       key=f"group_{brand}", label_visibility="collapsed")
         else:
@@ -121,8 +156,6 @@ for tab, brand in zip(tabs, brands):
                                       key=f"group_{brand}", label_visibility="collapsed")
 
         def filter_group(dataframe):
-            if selected_group == "주요상품":
-                return dataframe[dataframe["개수"].isin(BRAUN_KEY_MODELS)]
             if selected_group == "전체":
                 return dataframe
             return dataframe[dataframe["그룹"] == selected_group]
