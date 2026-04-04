@@ -45,6 +45,13 @@ def load_data():
     return df
 
 
+def fmt_price(val):
+    try:
+        if pd.isna(val): return "품절"
+        return f"{int(val):,}원"
+    except: return val
+
+
 VALID_BRANDS = ["braun", "duracell"]
 
 df = load_data()
@@ -155,12 +162,6 @@ for tab, brand in zip(tabs, brands):
             show_df = latest_df[["그룹", "SKU", "개수", "수량", "가격"]].copy()
             show_df.columns = ["그룹", "SKU", "개수", "수량", "가격"]
             show_df = show_df.sort_values(["그룹", "가격"], ascending=[True, False])
-        def fmt_price(val):
-            try:
-                if pd.isna(val): return "품절"
-                return f"{int(val):,}원"
-            except: return val
-
         st.dataframe(
             show_df.style.format({"가격": fmt_price}),
             use_container_width=True, height=500,
