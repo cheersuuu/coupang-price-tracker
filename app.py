@@ -80,6 +80,12 @@ def load_data():
     )
     # 품절 문자열은 NaN으로 처리해 숫자 연산 가능하게
     df["가격"] = pd.to_numeric(df["가격"], errors="coerce")
+    # merge 키: itemID 있으면 그대로, 없으면 productID+vendorItemID 조합
+    df["_mk"] = df.apply(
+        lambda r: str(r["itemID"]) if str(r["itemID"]).strip() not in ("", "nan")
+                  else f"{r['productID']}_{r['vendorItemID']}",
+        axis=1
+    )
     return df
 
 
@@ -118,7 +124,7 @@ for tab, brand in zip(tabs, brands):
 
             if prev:
                 prev_df_key = bdf[bdf["Date"].dt.date == prev].copy()
-                key_merged = key_latest.merge(prev_df_key[["itemID", "가격"]], on="itemID", suffixes=("", "_prev"))
+                key_merged = key_latest.merge(prev_df_key[["_mk", "가격"]], on="_mk", suffixes=("", "_prev"))
                 key_merged["변동"] = key_merged["가격"] - key_merged["가격_prev"]
 
                 def color_delta_key(val):
@@ -169,7 +175,7 @@ for tab, brand in zip(tabs, brands):
 
         if prev:
             prev_df = bdf[bdf["Date"].dt.date == prev].copy()
-            merged = latest_df.merge(prev_df[["itemID", "가격"]], on="itemID", suffixes=("", "_prev"))
+            merged = latest_df.merge(prev_df[["_mk", "가격"]], on="_mk", suffixes=("", "_prev"))
             merged["변동"] = merged["가격"] - merged["가격_prev"]
             up = (merged["변동"] > 0).sum()
             down = (merged["변동"] < 0).sum()
